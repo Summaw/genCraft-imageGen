@@ -4,7 +4,7 @@
 A basic python tool to automate the process of generating images at `https://gencraft.com`
 
 # Prompt
-- You can change the prompt you would like to give it here: [HERE](modules/tasks/generateImage.py#L37)
+- You can change the prompt you would like to give it here: [HERE](modules/tasks/generateImage.py#L34)
 - I will add an input line that will ask you for your prompt.
 
 # How To Use
