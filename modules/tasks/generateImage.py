@@ -8,12 +8,12 @@ async def generate_image(sessionId):
     time.sleep(2)
 
     cookies = {
-    'SESSION_ID': f'{sessionId}',
+        'SESSION_ID': f'{sessionId}',
     }
 
     headers = {
         'authority': 'api.gencraft.com',
-        'accept': 'application/json, text/plain, */*',
+        'accept': 'application json, text plain, */*',
         'accept-language': 'en-US,en;q=0.9',
         'content-type': 'application/json',
         'origin': 'https://gencraft.com',
@@ -22,19 +22,16 @@ async def generate_image(sessionId):
         'x-csrf-protection': '1',
     }
 
-    '''
-    model styles
-    art_style 1 = 3D Style
-    art_style 2 = Anime Style
-    art_style 14 = CyberPunk Style
-    art_style 9 = Realistic Style
-    art_style 29 = Video Game Style
-    art_style 17 = Isometric Style
-    
-    '''
+    # Model styles
+    # art_style 1 = 3D Style
+    # art_style 2 = Anime Style
+    # art_style 14 = CyberPunk Style
+    # art_style 9 = Realistic Style
+    # art_style 29 = Video Game Style
+    # art_style 17 = Isometric Style
 
     json_data = {
-        'prompt_text': 'A blue and gold macaw chilling on a tree overviewing the rainforest', #Give model a custom prompt here
+        'prompt_text': 'A blue and gold macaw chilling on a tree overviewing the rainforest',  # Give the model a custom prompt here
         'art_style_id': 9,
         'negative_prompt_text': '',
         'media_type': 'image',
@@ -43,17 +40,29 @@ async def generate_image(sessionId):
         'height': 1024,
     }
 
-    generate_image_request = requests.post('https://api.gencraft.com/api/v5/prompt/generate', cookies=cookies, headers=headers, json=json_data, timeout=30)
-    json_data = generate_image_request.text
+    generate_image_request = requests.post('https://api.gencraft.com/api/v5/prompt/generate', cookies=cookies, headers=headers,
+                                           json=json_data, timeout=30)
+    print(generate_image_request.text)
+    if generate_image_request.status_code == 400:
+        write('Daily limit reached. Please use a different X-WEB-TOKEN to continue generating images', 'error')
+    else:
+        response_json = json.loads(generate_image_request.text)
 
-    json_obj = json.loads(json_data)
+        if "data" in response_json and "images" in response_json["data"]:
+            images = response_json["data"]["images"]
+            image_urls = [image["url"] for image in images if "url" in image]
 
-    image_urls = []
-    if "data" in json_obj and "images" in json_obj["data"]:
-        images = json_obj["data"]["images"]
-        for image in images:
-            if "url" in image:
-                image_urls.append(image["url"])
+            structured_data = {
+                "prompt": {
+                    "prompt_text": json_data["prompt_text"],
+                    "art_style_id": json_data["art_style_id"],
+                },
+                "urls": image_urls,
+            }
 
-    for url in image_urls:
-        write(f"Image Generated: {url}", "success")
+            for url in image_urls:
+                write(f"Image Generated: {url}", "success")
+
+            with open("data/generated.json", "a") as json_file:
+                json_file.write("\n")
+                json.dump(structured_data, json_file, indent=4)
